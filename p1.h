@@ -9,7 +9,7 @@
 
 bool IsValidString(std::string word);
 
-void Parse(std::ifstream& in_file, std::ofstream& o_file);
+void ParseTextFile(std::ifstream& in_file, std::ofstream& o_file);
 
 
 //int main() {
