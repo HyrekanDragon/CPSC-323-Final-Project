@@ -295,7 +295,7 @@ bool Language::parse(string filename) {
 						cout << "push ) E (\n";
 						break;
 					case 21:
-						stack->push_back("N");
+						stack->push_back("M");
 						cout << "push M\n";
 						break;
 					case 22:
