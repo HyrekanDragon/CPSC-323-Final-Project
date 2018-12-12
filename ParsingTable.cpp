@@ -564,7 +564,7 @@ bool Language::parse(string filename) {
 				// TODO if we reach an identify check that it isnt a reserved word and that it uses all valid letters and symbols
 
 
-				/*else if (state == 'a' || state == '+' || state == '-' || state == '*' || state == '/' || state == '(' || state == ')' || state == '$') {
+				/*else if (state == "a" || state == "b" || state == "c" || state == "d" || state == "e" || state == "+" || state == "-" || state == "*" || state == "/" || state == "(" || state == ")" || state == "$") {
 				check = state;
 				if (check != word[i]) {
 				std::cout << "Expected a " << check << " at this position.\n";
