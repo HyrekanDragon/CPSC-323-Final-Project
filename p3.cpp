@@ -36,7 +36,7 @@ int main()
 		  offile << line << endl;
 	  }
 	  
-    else if (line == "integer")//integer can become int.
+	else if (line == "integer" || line == ":integer" )//integer can become int. Alaso accounts for chance text is attached.
 	  {
 		  line = "int";
 		  offile << line;
@@ -48,27 +48,28 @@ int main()
 		  offile << line << endl << "{" << endl;
 	  }
   	
-    else if (line == "show")//show works like cout.
-	  {
-		  line = "cout";
-	  	offile << line;
-  		infile >> line;
-		  if (line == "(") //syntax changes to preserve it.
-		  {
-			  line = "<<"; // carrots to lead into it.
-			  offile << line;
-			  while (line != ")")//preserve everything originally in the parenthesis.
-			  {
-				  infile >> line;
-				  if (line == ")") //there is left parenthesis, so this can go.
-				  {
-					  line == " ";
-					  break;
-				  }
+	else if (line == "show")//show works like cout.
+	{
+		line = "cout";
+		offile << line;
+		infile >> line;
+
+		if (line == "(") //syntax changes to preserve it.
+		{
+			line = "<<"; // carrots to lead into it.
+			offile << line;
+			while (line != ")" || line == ");")//preserve everything originally in the parenthesis.
+			{
+				infile >> line;
+				if (line == ")" || line == ");") //there is left parenthesis, so this can go.
+				{
+					line == " ";
+					break;
+				}
 				offile << line;
-			  }
-      }
-     }
+			}
+		}
+	}
       
 	  else if (line == "end")//end can become the right brace.
 	  {
