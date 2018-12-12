@@ -18,14 +18,16 @@ int main()
 	  {
 		  line = "#include <iostream>";//required to run
 		  offile << line;//to put in the new cpp file.
-		  infile >> line;
-		  if (line == "a2018")
-			  line = " ";//get rid of it.
-		  offile << line;
-		  infile >> line;
-		  if (line == ";")//iostream does not need the semicolon.
-			  line = " ";
-		  offile << line << endl;
+		  
+		  while (line != ";")//check to end at the semicolon originally in the file.
+			  {
+				  infile >> line;
+				  if (line == ";") //skips it and hits the next line of code.
+				  {
+					  offile << endl;
+					  break;
+				  }
+			  }
 	  }
 	  
     else if (line == "var")//var can become using namespace std.
