@@ -51,7 +51,9 @@ private:
 // 39 -> c
 // 40 -> d
 // 41 -> e
-//       P   V   B   E   I   S   ,   :   ;   =   (   )   +   -   *   /   C   a   b   c   d   e
+
+
+//   P   V   B   E   I   S   ,   :   ;   =   (   )   +   -   *   /   C   a   b   c   d   e
 int parsing_table[22][22] = {
 	01, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,   // P
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 02, 02, 02, 02, 02,   // J
@@ -93,6 +95,8 @@ public:
 	bool parenthesis_check(vector<string> tokens);
 	bool semicolons_check(string input_text);
 	bool undefined_var_check(vector<string> tokens);
+	vector<string> variables;
+
 };
 
 bool Language::reserved_words_check(vector<string> tokens) {
@@ -110,20 +114,29 @@ bool Language::reserved_words_check(vector<string> tokens) {
 }
 
 bool Language::comma_check(vector<string> tokens) {
-	int var_index = 0;
-	int integer_index = 0;
+	int var_index = -1;
+	int integer_index = -1;
 
 	for (int i = 0; i < tokens.size(); ++i) {
 		if (tokens[i] == "var") {
 			var_index = i;
 			break;
 		}
+	} 
+	if (var_index == -1) {
+		//var is missing so return back to the main
+		return true;
 	}
+
 	for (int i = 0; i < tokens.size(); ++i) {
 		if (tokens[i] == "integer") {
 			integer_index = i;
 			break;
 		}
+	}
+	if (integer_index == -1) {
+		//integer is missing so return back to the main and let the parser catch it
+		return true;
 	}
 
 	for (int i = var_index+1; i < integer_index-1; ++i) {
@@ -208,7 +221,7 @@ bool Language::undefined_var_check(vector<string> tokens) {
 			break;
 		}
 	}
-	vector<string> variables;
+	//vector<string> variables;
 	for (int j = var_index + 1; j < integer_index - 1; ++j) {
 		if (tokens[j] != "," && tokens[j] != ":")
 			variables.push_back(tokens[j]);
@@ -252,12 +265,14 @@ bool Language::passes_error_check(string input_text) {
 }
 
 
+
 bool Language::parse(string filename) {
 	string state;				// Current State
 	string check = "\0";		// If state is terminal, checks if it matches char being read
 	int parseId;			    // Used for parsing table to figure out what to push
 	std::vector<std::string> reserved{ "program", "var", "integer", "show", "begin", "end" };
 	stack = new vector<string>;
+	bool seen_operator = false;
 
 	ifstream in_file(filename);
 	string input_text;
@@ -302,34 +317,45 @@ bool Language::parse(string filename) {
 				}
 				std::cout << endl;
 
-				//if (curr_word.empty())
-				//	break;
-
 				// Pop State
 				state = stack->back();
 				stack->pop_back();
 				std::cout << "pop " << state << endl;
 
-				// Check if state is a reserved word. If it is, break so we can get the next word in the line.
-				if (std::find(reserved.begin(), reserved.end(), state) != reserved.end()) {
-					break;
-				}
-
 
 				// Check if state is terminal
 				char c = state[0];
 				vector<char> chars{ 'a','b','c','d','e' };
-				if ((isdigit(c) || c == ',' || c == ':' || c == ';' || c == '=' ||
-					c == '(' || c == ')' || c == '+' || c == '*' || c == '/' || 
-					find(chars.begin(), chars.end(), c) != chars.end()) /*&& c == curr_word[0]*/)
+				if ((isdigit(c) || c == ',' || c == ':' || c == ';' || c == '=' || 
+					c == '(' || c == ')' || c == '+' || c == '*' || c == '/' || c == '-' ||
+					find(chars.begin(), chars.end(), c) != chars.end()) || 
+					find(reserved.begin(), reserved.end(), state) != reserved.end())
 				{
 					// read from string
-					if (c == curr_word[0])
+					if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=')
+						seen_operator = true;
+
+					// if state is a reserved word
+					if (find(reserved.begin(), reserved.end(), state) != reserved.end()) {
+						// missing a reserved word
+						if (state != curr_word) {
+							std::cout << state << " was expected";
+							return false;
+						}
+						// grab the next word
+						else
+							break;
+					}
+
+					// read from string
+					else if (c == curr_word[0]) {
 						curr_word.erase(0, 1);
-					//else {
-					//	std::cout << c << " was expected";
-					//	return false;
-					//}
+						break;
+					}
+					else {
+						std::cout << state << " was expected";
+						return false;
+					}
 				}
 
 				// If state is non-terminal
@@ -360,28 +386,12 @@ bool Language::parse(string filename) {
 					// Get code from parsing table and push states onto the stack accordingly
 					switch (parseId) {
 					case -1:
-						// -1 means reject word
-						// cases not handled yet: 
-						// missing operators (+ - * /)
-						// missing operands i.e. x = 1 * ;
 						if (state == "P")
 							std::cout << "program is expected.";
-						else if (state == "V")
-							std::cout << "var is expected.";
-						else if (state == "K" && curr_word == "integer") 
-							std::cout << ": is missing";
-						// doesn't work if the variable after begin is missing
-						//else if (state == "Y" && curr_word == "=")
-						//	std::cout << "begin is expected.";
-						else if (state == "X")
-							std::cout << "integer is expected or misspelled.";
 						else if (state == "H" && curr_word == "(")
 							std::cout << "show is expected or misspelled.";
-						else if ((state == "H" && curr_word == "=") || (state == "E" && curr_word == ";") || 
-							(state == "J" && curr_word == ";") || (state == "Y" && curr_word == "="))
-							std::cout << "invalid expression";
 						else
-							std::cout << "Unable to find a match\n";
+							std::cout << "invalid expression";
 						return false;
 					case 0:										// 0 means lambda, continue and pop next state
 						std::cout << "push lambda\n";
@@ -559,19 +569,6 @@ bool Language::parse(string filename) {
 						break;
 					}
 				}
-
-
-				// TODO if we reach an identify check that it isnt a reserved word and that it uses all valid letters and symbols
-
-
-				/*else if (state == "a" || state == "b" || state == "c" || state == "d" || state == "e" || state == "+" || state == "-" || state == "*" || state == "/" || state == "(" || state == ")" || state == "$") {
-				check = state;
-				if (check != word[i]) {
-				std::cout << "Expected a " << check << " at this position.\n";
-				return false;
-				}
-				std::cout << word[i] << " matches " << check << endl;
-				}*/
 			} while (check != curr_word);
 		}
 	}
@@ -583,7 +580,7 @@ bool Language::parse(string filename) {
 	}
 	else {
 		delete stack;
-		std::cout << "Forgot to put end at the end!\n";
+		std::cout << "end is expected\n";
 		return false;
 	}
 	delete stack;
